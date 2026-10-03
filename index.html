@@ -181,22 +181,32 @@ rota(/^\/radar$/, (m, q) => ({ t: "Radar", h: `<h1>Radar: canal aberto</h1><p cl
       if (!publico && !/^\S+@\S+\.\S+$/.test($("#fe").value)) f("fe", "Informe um e-mail válido."); if (!$("#fk").checked) f("fk", "Marque a caixa para continuar.");
       if (ruim.length) { ruim[0].focus(); return; }
       if ($("#fh")?.value) return;
-      const fila = JSON.parse(localStorage.getItem("ks_radar") || "[]"), prot = "KS-" + Date.now().toString(36).toUpperCase();   // protótipo: guarda só no navegador
+      let fila = []; try { fila = JSON.parse(localStorage.getItem("ks_radar") || "[]"); } catch (x) {} const prot = "KS-" + Date.now().toString(36).toUpperCase();   // protótipo: guarda só no navegador
       fila.push({ prot, publico, plataforma: $("#fp").value, texto: $("#fd").value }); try { localStorage.setItem("ks_radar", JSON.stringify(fila)); } catch (x) {}
-      $("#fm").innerHTML = `<div class="note" role="status"><b>Recebido!</b> Protocolo <b id="prot">${prot}</b>. (Protótipo: salvo só neste navegador.)</div>`; }; };
+      $("#fm").innerHTML = `<div class="note" role="status"><b>Recebido!</b> Protocolo <b id="prot">${prot}</b>. (Protótipo: salvo só neste navegador.)</div>`; };
+    $("#f button").onclick = (e) => { e.preventDefault(); $("#f").onsubmit(e); }; };
   $("#ta").onclick = () => mostrar(true); $("#tb").onclick = () => mostrar(false); mostrar(q.aba !== "plataforma");
 } }));
 
 /* ---------- Roteador ---------- */
-function ir() {
-  const raw = location.hash.slice(1) || "/", [path, qs] = raw.split("?"), q = Object.fromEntries(new URLSearchParams(qs || ""));
+function ir(destino) {
+  const raw = (typeof destino === "string" && destino) || location.hash.slice(1) || "/", [path, qs] = raw.split("?"), q = Object.fromEntries(new URLSearchParams(qs || ""));
   const hit = R.find(([re]) => re.test(path)), v = $("#view");
   const res = hit ? hit[1](path.match(hit[0]), q) : { t: "Não encontrada", h: "<h1>Página não encontrada</h1><a href='#/'>Voltar ao início</a>" };
   v.innerHTML = res.h; v.dataset.rota = raw; document.title = res.t + " — Kids Sentinel"; res.a && res.a();
   $$("nav a").forEach((a) => a.getAttribute("href").split("/")[1] === path.split("/")[1] || (a.getAttribute("href") === "#/plataformas" && path.startsWith("/plataforma")) ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   if (ir.n++) { const h1 = $("h1", v); if (h1) { h1.tabIndex = -1; h1.focus({ preventScroll: true }); } scrollTo(0, 0); }   // 1ª carga: mantém o foco no “Pular para o conteúdo”
 }
-ir.n = 0; addEventListener("hashchange", ir); ir();
+ir.n = 0;
+addEventListener("hashchange", () => ir());
+document.addEventListener("click", (e) => {
+  const a = e.target.closest && e.target.closest('a[href^="#/"]');
+  if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || a.target) return;
+  e.preventDefault(); const h = a.getAttribute("href");
+  try { history.pushState(null, "", h); } catch (x) { /* ambiente restrito: segue sem alterar a URL */ }
+  ir(h.slice(1));
+});
+ir();
 
 /* ---------- Assistente (IA) ---------- */
 const add = (c, t) => { const d = document.createElement("div"); d.className = "m " + c; d.textContent = t; $("#msgs").appendChild(d); $("#msgs").scrollTop = 1e9; return d; };
@@ -213,5 +223,6 @@ async function perguntar(t) {
 }
 $("#fab").onclick = () => { const a = $("#chat").hidden; $("#chat").hidden = !a; $("#fab").setAttribute("aria-expanded", a); if (a) { $("#ci").focus(); if (!$("#msgs").children.length) add("b", "Olá! Tire suas dúvidas sobre o ECA Digital. Não dou aconselhamento jurídico."); } };
 $("#cf").onsubmit = (e) => { e.preventDefault(); const t = $("#ci").value.trim(); if (t) { $("#ci").value = ""; perguntar(t); } };
+$("#cf button").onclick = (e) => { e.preventDefault(); $("#cf").onsubmit(e); };   // também funciona em visualizadores que bloqueiam formulários
 $("#chat").onkeydown = (e) => { if (e.key === "Escape") { $("#chat").hidden = true; $("#fab").setAttribute("aria-expanded", "false"); $("#fab").focus(); } };
 </script></body></html>
