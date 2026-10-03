@@ -1,0 +1,14 @@
+{
+  "name": "kids-sentinel-prototipo",
+  "version": "0.1.0",
+  "description": "Kids Sentinel — protótipo de baixa fidelidade do Observatório ECA Digital",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server/proxy.mjs",
+    "ux-bot": "node tests/ux-bot.mjs"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": { "@anthropic-ai/sdk": "^0.131.0" },
+  "devDependencies": { "playwright": "1.56.1" }
+}
